@@ -39,10 +39,21 @@ type Client struct {
 	userAgent  string
 
 	// Resource services
-	Checkouts *CheckoutService
-	Webhooks  *WebhookService
-	Events    *EventService
-	Health    *HealthService
+	Checkouts            *CheckoutService
+	Webhooks             *WebhookService
+	Events               *EventService
+	Health               *HealthService
+	Customers            *CustomerService
+	PaymentMethods       *PaymentMethodService
+	PaymentLinks         *PaymentLinkService
+	SubscriptionPlans    *SubscriptionPlanService
+	Subscriptions        *SubscriptionService
+	SubscriptionRenewals *SubscriptionRenewalService
+	Entitlements         *EntitlementService
+	Payouts              *PayoutService
+	Settlements          *SettlementService
+	RevenueEvents        *RevenueEventService
+	Adjustments          *AdjustmentService
 }
 
 // Option configures a Client.
@@ -83,6 +94,17 @@ func New(apiKey string, opts ...Option) *Client {
 	c.Webhooks = &WebhookService{client: c}
 	c.Events = &EventService{client: c}
 	c.Health = &HealthService{client: c}
+	c.Customers = &CustomerService{client: c}
+	c.PaymentMethods = &PaymentMethodService{client: c}
+	c.PaymentLinks = &PaymentLinkService{client: c}
+	c.SubscriptionPlans = &SubscriptionPlanService{client: c}
+	c.Subscriptions = &SubscriptionService{client: c}
+	c.SubscriptionRenewals = &SubscriptionRenewalService{client: c}
+	c.Entitlements = &EntitlementService{client: c}
+	c.Payouts = &PayoutService{client: c}
+	c.Settlements = &SettlementService{client: c}
+	c.RevenueEvents = &RevenueEventService{client: c}
+	c.Adjustments = &AdjustmentService{client: c}
 
 	return c
 }
@@ -147,6 +169,11 @@ func (c *Client) get(ctx context.Context, path string, dest any) error {
 // post is a convenience wrapper for POST requests.
 func (c *Client) post(ctx context.Context, path string, body any, dest any, headers map[string]string) error {
 	return c.do(ctx, http.MethodPost, path, body, dest, headers)
+}
+
+// patch is a convenience wrapper for PATCH requests.
+func (c *Client) patch(ctx context.Context, path string, body any, dest any) error {
+	return c.do(ctx, http.MethodPatch, path, body, dest, nil)
 }
 
 // del is a convenience wrapper for DELETE requests.

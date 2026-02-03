@@ -218,6 +218,17 @@ Auto-pagination is available on all list endpoints:
 client.Checkouts.ListAutoPaginate(ctx, params)
 client.Webhooks.ListAutoPaginate(ctx, params)
 client.Events.ListAutoPaginate(ctx, params)
+client.Customers.ListAutoPaginate(ctx, params)
+client.PaymentMethods.ListAutoPaginate(ctx, params)
+client.PaymentLinks.ListAutoPaginate(ctx, params)
+client.SubscriptionPlans.ListAutoPaginate(ctx, params)
+client.Subscriptions.ListAutoPaginate(ctx, params)
+client.SubscriptionRenewals.ListAutoPaginate(ctx, params)
+client.Entitlements.ListAutoPaginate(ctx, params)
+client.Payouts.ListAutoPaginate(ctx, params)
+client.Settlements.ListAutoPaginate(ctx, params)
+client.RevenueEvents.ListAutoPaginate(ctx, params)
+client.Adjustments.ListAutoPaginate(ctx, params)
 ```
 
 ## Idempotency
@@ -265,6 +276,190 @@ events, err := client.Events.List(ctx, &billingio.ListEventsParams{
 event, err := client.Events.Get(ctx, "evt_abc123")
 
 func strPtr(s string) *string { return &s }
+```
+
+## Customers
+
+```go
+// Create a customer
+customer, err := client.Customers.Create(ctx, &billingio.CreateCustomerParams{
+	Email: "alice@example.com",
+	Name:  strPtr("Alice"),
+})
+
+// List customers
+list, err := client.Customers.List(ctx, nil)
+
+// Get a single customer
+customer, err := client.Customers.Get(ctx, "cus_abc123")
+
+// Update a customer
+customer, err := client.Customers.Update(ctx, "cus_abc123", &billingio.UpdateCustomerParams{
+	Name: strPtr("Alice Smith"),
+})
+```
+
+## Payment methods
+
+```go
+// Create a payment method
+pm, err := client.PaymentMethods.Create(ctx, &billingio.CreatePaymentMethodParams{
+	CustomerID:    "cus_abc123",
+	Type:          billingio.PaymentMethodTypeWallet,
+	Chain:         billingio.ChainTron,
+	WalletAddress: "T...",
+})
+
+// List payment methods for a customer
+list, err := client.PaymentMethods.List(ctx, &billingio.ListPaymentMethodsParams{
+	CustomerID: strPtr("cus_abc123"),
+})
+
+// Set as default
+pm, err = client.PaymentMethods.SetDefault(ctx, "pm_abc123")
+
+// Delete a payment method
+err = client.PaymentMethods.Delete(ctx, "pm_abc123")
+```
+
+## Payment links
+
+```go
+// Create a payment link
+link, err := client.PaymentLinks.Create(ctx, &billingio.CreatePaymentLinkParams{
+	AmountUSD:   floatPtr(25.00),
+	Description: strPtr("Pro plan"),
+})
+
+// List payment links
+list, err := client.PaymentLinks.List(ctx, nil)
+```
+
+## Subscription plans
+
+```go
+// Create a plan
+plan, err := client.SubscriptionPlans.Create(ctx, &billingio.CreateSubscriptionPlanParams{
+	Name:            "Pro Monthly",
+	AmountUSD:       29.99,
+	BillingInterval: billingio.BillingIntervalMonthly,
+})
+
+// List plans
+list, err := client.SubscriptionPlans.List(ctx, nil)
+
+// Update a plan
+plan, err = client.SubscriptionPlans.Update(ctx, "plan_abc123", &billingio.UpdateSubscriptionPlanParams{
+	Name: strPtr("Pro Monthly (Updated)"),
+})
+```
+
+## Subscriptions
+
+```go
+// Create a subscription
+sub, err := client.Subscriptions.Create(ctx, &billingio.CreateSubscriptionParams{
+	CustomerID: "cus_abc123",
+	PlanID:     "plan_abc123",
+})
+
+// List subscriptions
+list, err := client.Subscriptions.List(ctx, nil)
+
+// Cancel a subscription
+cancelled := billingio.SubscriptionStatusCancelled
+sub, err = client.Subscriptions.Update(ctx, "sub_abc123", &billingio.UpdateSubscriptionParams{
+	Status: &cancelled,
+})
+```
+
+## Subscription renewals
+
+```go
+// List renewals
+list, err := client.SubscriptionRenewals.List(ctx, &billingio.ListSubscriptionRenewalsParams{
+	SubscriptionID: strPtr("sub_abc123"),
+})
+
+// Retry a failed renewal
+renewal, err := client.SubscriptionRenewals.Retry(ctx, "ren_abc123")
+```
+
+## Entitlements
+
+```go
+// Create an entitlement
+ent, err := client.Entitlements.Create(ctx, &billingio.CreateEntitlementParams{
+	SubscriptionID: "sub_abc123",
+	FeatureKey:     "api_calls",
+	Value:          "10000",
+})
+
+// Check if a customer is entitled
+check, err := client.Entitlements.Check(ctx, &billingio.CheckEntitlementParams{
+	CustomerID: "cus_abc123",
+	FeatureKey: "api_calls",
+})
+fmt.Printf("Entitled: %v, value: %s\n", check.Entitled, check.Value)
+
+// Delete an entitlement
+err = client.Entitlements.Delete(ctx, "ent_abc123")
+```
+
+## Payouts
+
+```go
+// Create a payout intent
+payout, err := client.Payouts.Create(ctx, &billingio.CreatePayoutParams{
+	AmountUSD:     500.00,
+	Chain:         billingio.ChainArbitrum,
+	Token:         billingio.TokenUSDC,
+	WalletAddress: "0x...",
+})
+
+// Execute a pending payout
+payout, err = client.Payouts.Execute(ctx, "po_abc123")
+
+// List payouts
+list, err := client.Payouts.List(ctx, nil)
+```
+
+## Settlements
+
+```go
+// List settlements
+list, err := client.Settlements.List(ctx, &billingio.ListSettlementsParams{
+	PayoutID: strPtr("po_abc123"),
+})
+```
+
+## Revenue events
+
+```go
+// List revenue events
+list, err := client.RevenueEvents.List(ctx, nil)
+
+// Get accounting summary
+summary, err := client.RevenueEvents.Accounting(ctx, &billingio.AccountingSummaryParams{
+	PeriodStart: strPtr("2025-01-01T00:00:00Z"),
+	PeriodEnd:   strPtr("2025-02-01T00:00:00Z"),
+})
+fmt.Printf("Net revenue: $%.2f\n", summary.NetRevenueUSD)
+```
+
+## Adjustments
+
+```go
+// Create a credit adjustment
+adj, err := client.Adjustments.Create(ctx, &billingio.CreateAdjustmentParams{
+	Type:        billingio.AdjustmentTypeCredit,
+	AmountUSD:   10.00,
+	CustomerID:  strPtr("cus_abc123"),
+	Description: strPtr("Goodwill credit"),
+})
+
+// List adjustments
+list, err := client.Adjustments.List(ctx, nil)
 ```
 
 ## License
